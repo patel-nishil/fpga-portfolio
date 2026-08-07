@@ -1,0 +1,6 @@
+output_files/
+dni/
+qdb/
+*.qpf
+*.qsf
+*.qws
