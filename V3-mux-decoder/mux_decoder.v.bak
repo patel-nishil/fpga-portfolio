@@ -1,0 +1,26 @@
+module mux_decoder (
+    input  wire sw0,   // MUX select / decoder bit 1
+    input  wire sw1,   // MUX data_0 / decoder bit 0
+    input  wire sw2,   // MUX data_1
+    output wire led0,  // MUX output
+    output reg  led1,  // decoder: 00
+    output reg  led2,  // decoder: 01
+    output reg  led3,  // decoder: 10
+    output reg  led4   // decoder: 11
+);
+
+    // 2-to-1 MUX: when sw0=0 output follows sw1, when sw0=1 output follows sw2
+    assign led0 = sw0 ? sw2 : sw1;
+
+    // 2-to-4 decoder: {sw0, sw1} forms a 2-bit value, one LED active at a time
+    always @(*) begin
+        led1 = 0; led2 = 0; led3 = 0; led4 = 0;
+        case ({sw0, sw1})
+            2'b00: led1 = 1;
+            2'b01: led2 = 1;
+            2'b10: led3 = 1;
+            2'b11: led4 = 1;
+        endcase
+    end
+
+endmodule
