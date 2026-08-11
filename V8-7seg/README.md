@@ -1,22 +1,14 @@
-\# V8 — 7-Segment Display Driver
+V8 — 7-Segment Display Driver
+
+Board: Intel Agilex 5 DE25-Nano
+
+Tool: Quartus Prime Pro 25.1.1
+
+Milestone: V8 of the FPGA/Verilog portfolio
 
 
 
-\*\*Board:\*\* Intel Agilex 5 DE25-Nano  
-
-\*\*Tool:\*\* Quartus Prime Pro 25.1.1  
-
-\*\*Milestone:\*\* V8 of the FPGA/Verilog portfolio
-
-
-
-\---
-
-
-
-\## What It Does
-
-
+What It Does
 
 Implements a BCD-to-7-segment decoder displaying hex digits 0–F on an external single-digit common cathode 7-segment display. Four slide switches select the digit; the decoder drives segments a–g via the GPIO 1 (JP2) expansion header at 3.3V.
 
@@ -26,75 +18,51 @@ This is a purely combinational design — no clock, no registers. Outputs follow
 
 
 
-\---
+Hardware
+
+Display: Single-digit common cathode 7-segment (ELEGOO Super Starter Kit)
+
+Connection: GPIO 1 header (JP2) on the DE25-Nano
+
+Resistors: 220Ω in series with each segment pin (limits current to \~6 mA at 3.3V)
 
 
 
-\## Hardware
+Wiring
 
+Display Pin	Signal	220Ω → JP2 Pin	Quartus Pin	I/O Standard
 
+a (top)	seg\_a	JP2 pin 1	PIN\_BV14	3.3-V LVCMOS
 
-\*\*Display:\*\* Single-digit common cathode 7-segment (ELEGOO Super Starter Kit)  
+b	seg\_b	JP2 pin 2	PIN\_CG26	3.3-V LVCMOS
 
-\*\*Connection:\*\* GPIO 1 header (JP2) on the DE25-Nano  
+c	seg\_c	JP2 pin 3	PIN\_DM2	3.3-V LVCMOS
 
-\*\*Resistors:\*\* 220Ω in series with each segment pin (limits current to \~6 mA at 3.3V)
+d	seg\_d	JP2 pin 4	PIN\_CD23	3.3-V LVCMOS
 
+e	seg\_e	JP2 pin 5	PIN\_CG23	3.3-V LVCMOS
 
+f	seg\_f	JP2 pin 6	PIN\_CE14	3.3-V LVCMOS
 
-\### Wiring
+g (middle)	seg\_g	JP2 pin 7	PIN\_CA23	3.3-V LVCMOS
 
-
-
-| Display Pin | Signal  | 220Ω → JP2 Pin | Quartus Pin | I/O Standard |
-
-|-------------|---------|----------------|-------------|--------------|
-
-| a (top)     | seg\_a   | JP2 pin 1      | PIN\_BV14    | 3.3-V LVCMOS |
-
-| b           | seg\_b   | JP2 pin 2      | PIN\_CG26    | 3.3-V LVCMOS |
-
-| c           | seg\_c   | JP2 pin 3      | PIN\_DM2     | 3.3-V LVCMOS |
-
-| d           | seg\_d   | JP2 pin 4      | PIN\_CD23    | 3.3-V LVCMOS |
-
-| e           | seg\_e   | JP2 pin 5      | PIN\_CG23    | 3.3-V LVCMOS |
-
-| f           | seg\_f   | JP2 pin 6      | PIN\_CE14    | 3.3-V LVCMOS |
-
-| g (middle)  | seg\_g   | JP2 pin 7      | PIN\_CA23    | 3.3-V LVCMOS |
-
-| COM (pin 3 \& 8) | GND | JP2 pin 12    | —           | —            |
-
-
+COM (pin 3 \& 8)	GND	JP2 pin 12	—	—
 
 Switch inputs use the onboard pins (1.1-V standard):
 
 
 
-| Signal | Role   | Pin      |
+Signal	Role	Pin
 
-|--------|--------|----------|
+sw0	BCD\[0]	PIN\_DK24
 
-| sw0    | BCD\[0] | PIN\_DK24 |
+sw1	BCD\[1]	PIN\_DD24
 
-| sw1    | BCD\[1] | PIN\_DD24 |
+sw2	BCD\[2]	PIN\_DD27
 
-| sw2    | BCD\[2] | PIN\_DD27 |
+sw3	BCD\[3]	PIN\_DF27
 
-| sw3    | BCD\[3] | PIN\_DF27 |
-
-
-
-\---
-
-
-
-\## Verilog
-
-
-
-```verilog
+Verilog
 
 module seg7\_driver (
 
@@ -198,35 +166,23 @@ module seg7\_driver (
 
 endmodule
 
-```
+Key Concepts Learned
+
+Purely combinational design: No clock port, no registers. Outputs update immediately when inputs change. Contrast with V5–V7 where a clock was required for all state-holding behavior.
 
 
 
-\---
+Case statement as lookup table: A Boolean equation for each segment would require a sum-of-products expression across all 4 input bits — 7 separate equations, each with up to 12 product terms. The case statement instead maps each of the 16 input combinations to a direct segment pattern. Each row is human-readable, easy to verify against a reference, and trivial to modify. Synthesis tools optimize both approaches equally in hardware.
 
 
 
-\## Key Concepts Learned
+Mixed I/O standards: The onboard switches use 1.1-V I/O (their native bank voltage). The GPIO header uses 3.3-V LVCMOS. Quartus handles multiple I/O standards within one design by bank — each pin's standard must match its bank voltage.
 
 
 
-\*\*Purely combinational design:\*\* No clock port, no registers. Outputs update immediately when inputs change. Contrast with V5–V7 where a clock was required for all state-holding behavior.
+Active-low vs active-high outputs: Onboard LEDR LEDs are active-low (logic 0 = on), requiring output inversion. The external common cathode display is active-high (logic 1 = segment on), so no inversion is needed. The Verilog must match the hardware it drives.
 
 
 
-\*\*Case statement as lookup table:\*\* A Boolean equation for each segment would require a sum-of-products expression across all 4 input bits — 7 separate equations, each with up to 12 product terms. The `case` statement instead maps each of the 16 input combinations to a direct segment pattern. Each row is human-readable, easy to verify against a reference, and trivial to modify. Synthesis tools optimize both approaches equally in hardware.
-
-
-
-\*\*Mixed I/O standards:\*\* The onboard switches use 1.1-V I/O (their native bank voltage). The GPIO header uses 3.3-V LVCMOS. Quartus handles multiple I/O standards within one design by bank — each pin's standard must match its bank voltage.
-
-
-
-\*\*Active-low vs active-high outputs:\*\* Onboard LEDR LEDs are active-low (logic 0 = on), requiring output inversion. The external common cathode display is active-high (logic 1 = segment on), so no inversion is needed. The Verilog must match the hardware it drives.
-
-
-
-\*\*b and d are lowercase\*\* on 7-segment hex displays to avoid confusion with 8 (B) and 0 (D).
-
-
+b and d are lowercase on 7-segment hex displays to avoid confusion with 8 (B) and 0 (D).
 
